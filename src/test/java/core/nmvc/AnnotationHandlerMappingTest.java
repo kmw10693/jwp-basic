@@ -2,6 +2,7 @@ package core.nmvc;
 
 import static org.junit.Assert.*;
 
+import next.controller.AnnotationHandlerMapping;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -14,7 +15,7 @@ public class AnnotationHandlerMappingTest {
     private MockHttpServletResponse response;
 
     @Before
-    public void setup() {
+    public void setup() throws InstantiationException, IllegalAccessException {
         handlerMapping = new AnnotationHandlerMapping("core.nmvc");
         handlerMapping.initialize();
 

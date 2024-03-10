@@ -1,29 +1,48 @@
-package core.nmvc;
+package next.controller;
 
-import java.util.Map;
+import core.annotation.RequestMapping;
+import core.annotation.RequestMethod;
+import core.nmvc.HandlerExecution;
+import core.nmvc.HandlerKey;
+import core.nmvc.HandlerMapping;
+import org.reflections.ReflectionUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.google.common.collect.Maps;
+public class AnnotationHandlerMapping implements HandlerMapping {
 
-import core.annotation.RequestMethod;
+    private final Map<HandlerKey, HandlerExecution> map = new HashMap<>();
 
-public class AnnotationHandlerMapping {
     private Object[] basePackage;
 
-    private Map<HandlerKey, HandlerExecution> handlerExecutions = Maps.newHashMap();
+    public void initialize() throws InstantiationException, IllegalAccessException {
+        ControllerScanner controllerScanner = new ControllerScanner(basePackage);
+        Map<Class<?>, Object> classMap = controllerScanner.getControllers();
 
-    public AnnotationHandlerMapping(Object... basePackage) {
-        this.basePackage = basePackage;
+        for (Class<?> clazz : classMap.keySet()) {
+            Set<Method> allMethods = ReflectionUtils.getAllMethods(clazz, ReflectionUtils.withAnnotation(RequestMapping.class));
+            for (Method allMethod : allMethods) {
+                RequestMapping annotation = allMethod.getAnnotation(RequestMapping.class);
+                map.put(createHandlerKey(annotation), new HandlerExecution(classMap.get(allMethod.getDeclaringClass()), allMethod));
+            }
+        }
     }
 
-    public void initialize() {
-
+    private HandlerKey createHandlerKey(RequestMapping rm) {
+        return new HandlerKey(rm.value(), rm.method());
     }
 
     public HandlerExecution getHandler(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         RequestMethod rm = RequestMethod.valueOf(request.getMethod().toUpperCase());
-        return handlerExecutions.get(new HandlerKey(requestUri, rm));
+        return map.get(new HandlerKey(requestUri, rm));
+    }
+
+    public AnnotationHandlerMapping(Object... basePackage) {
+        this.basePackage = basePackage;
     }
 }
