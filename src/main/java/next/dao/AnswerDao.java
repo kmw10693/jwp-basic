@@ -49,6 +49,12 @@ public class AnswerDao {
         return jdbcTemplate.queryForObject(sql, rm, answerId);
     }
 
+    public void delete(long answerId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        String sql = "DELETE FROM ANSWERS WHERE answerId = ?";
+        jdbcTemplate.update(sql, answerId);
+    }
+
     public List<Answer> findAllByQuestionId(long questionId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         String sql = "SELECT answerId, writer, contents, createdDate FROM ANSWERS WHERE questionId = ? "
